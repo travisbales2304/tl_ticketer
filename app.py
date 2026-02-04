@@ -22,6 +22,7 @@ _driver_lock = threading.Lock()
 _driver: Optional[webdriver.Chrome] = None
 _injector_thread: Optional[threading.Thread] = None
 _stop_injector = threading.Event()
+_last_event_ts: int = 0
 
 
 def _load_config() -> dict:
@@ -73,6 +74,7 @@ def _try_inject(driver: webdriver.Chrome) -> None:
 def _injector_loop() -> None:
     cfg = _load_config()
     interval = cfg["INJECT_INTERVAL_SEC"]
+    global _last_event_ts
     while not _stop_injector.is_set():
         with _driver_lock:
             driver = _driver
@@ -81,6 +83,16 @@ def _injector_loop() -> None:
             continue
         try:
             _try_inject(driver)
+            event = driver.execute_script("return window.__tl_last_event || null;")
+            if event and isinstance(event, dict):
+                ts = int(event.get("ts") or 0)
+                if ts > _last_event_ts:
+                    _last_event_ts = ts
+                    app.logger.info("ThreatLocker event: %s", event)
+                    details = event.get("detail", {}).get("details")
+                    if isinstance(details, list):
+                        for item in details:
+                            app.logger.info("ThreatLocker detail: %s", item)
         except WebDriverException:
             pass
         time.sleep(interval)

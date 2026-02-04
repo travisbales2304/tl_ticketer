@@ -4,33 +4,14 @@
     return;
   }
 
-  const HOOK_URL = "http://localhost:5000/hook";
   const mark = "data-tl-hooked";
 
-  function send(eventName, detail) {
-    const payload = JSON.stringify({
+  function recordEvent(eventName, detail) {
+    window.__tl_last_event = {
       event: eventName,
       detail: detail || {},
       ts: Date.now(),
-    });
-    try {
-      if (navigator.sendBeacon) {
-        navigator.sendBeacon(HOOK_URL, payload);
-        return;
-      }
-    } catch (e) {
-      // ignore
-    }
-    try {
-      fetch(HOOK_URL, {
-        method: "POST",
-        mode: "no-cors",
-        headers: { "Content-Type": "application/json" },
-        body: payload,
-      });
-    } catch (e) {
-      // ignore
-    }
+    };
   }
 
   function isApproveButton(el) {
@@ -41,25 +22,50 @@
     return txt.includes("approve");
   }
 
-  function hookButton(btn) {
+  function hookButton(btn, labelText) {
     if (btn.getAttribute(mark) === "1") return;
     btn.setAttribute(mark, "1");
+    console.log("[TL] Hooked approve button:", labelText || (btn.innerText || "").trim());
     btn.addEventListener(
       "click",
       () => {
-        send("approve_clicked", { text: (btn.innerText || "").trim() });
+        console.log("[TL] Approve clicked:", labelText || (btn.innerText || "").trim());
+        const texts = Array.from(
+          document.querySelectorAll("p.text-600.break-word.select-all")
+        )
+          .map((el) => (el.innerText || el.textContent || "").trim())
+          .filter((txt) => txt.length > 0);
+        recordEvent("approve_clicked", {
+          text: (labelText || btn.innerText || "").trim(),
+          details: texts,
+        });
       },
       true
     );
   }
 
+  function findClickable(el) {
+    if (!el) return null;
+    if (el.tagName === "BUTTON") return el;
+    if (el.getAttribute && el.getAttribute("role") === "button") return el;
+    if (el.tagName === "INPUT" && (el.type === "button" || el.type === "submit")) return el;
+    return el.closest
+      ? el.closest("button, [role='button'], input[type='button'], input[type='submit']")
+      : null;
+  }
+
   function scan() {
-    const buttons = Array.from(
+    const candidates = Array.from(
       document.querySelectorAll(
-        "button, [role='button'], input[type='button'], input[type='submit']"
+        "button, [role='button'], input[type='button'], input[type='submit'], .p-button-label"
       )
     );
-    buttons.filter(isApproveButton).forEach(hookButton);
+    candidates.forEach((el) => {
+      if (!isApproveButton(el)) return;
+      const labelText = (el.innerText || el.textContent || "").trim();
+      const clickable = findClickable(el) || el;
+      hookButton(clickable, labelText);
+    });
   }
 
   scan();
