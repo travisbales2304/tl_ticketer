@@ -2,6 +2,7 @@
 
 import json
 import os
+import sys
 import threading
 import time
 from pathlib import Path
@@ -89,10 +90,12 @@ def _injector_loop() -> None:
                 if ts > _last_event_ts:
                     _last_event_ts = ts
                     app.logger.info("ThreatLocker event: %s", event)
+                    print(f"ThreatLocker event: {event}")
                     details = event.get("detail", {}).get("details")
                     if isinstance(details, list):
                         for item in details:
                             app.logger.info("ThreatLocker detail: %s", item)
+                            print(f"ThreatLocker detail: {item}")
         except WebDriverException:
             pass
         time.sleep(interval)
@@ -154,4 +157,26 @@ def hook():
 
 
 if __name__ == "__main__":
-    app.run(host="127.0.0.1", port=5000, debug=True)
+    if len(sys.argv) > 1:
+        cmd = sys.argv[1].lower()
+        if cmd == "start":
+            with _driver_lock:
+                if _driver is None:
+                    _driver = _start_driver()
+            _ensure_injector_thread()
+            print("Started Selenium session.")
+        elif cmd == "stop":
+            with _driver_lock:
+                driver = _driver
+                _driver = None
+            _stop_injector.set()
+            if driver is not None:
+                try:
+                    driver.quit()
+                except WebDriverException:
+                    pass
+            print("Stopped Selenium session.")
+        else:
+            print("Unknown command. Use: python app.py start|stop")
+    else:
+        app.run(host="127.0.0.1", port=5000, debug=True)
