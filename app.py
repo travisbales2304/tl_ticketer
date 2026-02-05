@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 import time
 from pathlib import Path
@@ -13,6 +14,7 @@ from selenium.webdriver.chrome.service import Service
 APP_ROOT = Path(__file__).resolve().parent
 INJECT_JS_PATH = APP_ROOT / "inject.js"
 LOCAL_CHROMEDRIVER = APP_ROOT / "chromedriver.exe"
+TIME_SAVED_PATH = APP_ROOT / "time_saved.json"
 
 
 def _load_config() -> dict:
@@ -88,6 +90,34 @@ def _append_event(events: List[Dict[str, Any]], event: Dict[str, Any], max_event
         del events[: len(events) - max_events]
 
 
+def _load_time_saved() -> Dict[str, List[Dict[str, str]]]:
+    if not TIME_SAVED_PATH.exists():
+        return {}
+    try:
+        data = json.loads(TIME_SAVED_PATH.read_text(encoding="utf-8"))
+        if isinstance(data, dict):
+            return data
+    except json.JSONDecodeError:
+        pass
+    return {}
+
+
+def _save_time_saved(data: Dict[str, List[Dict[str, str]]]) -> None:
+    TIME_SAVED_PATH.write_text(json.dumps(data, indent=2), encoding="utf-8")
+
+
+def _record_time_saved(application_name: str) -> None:
+    date_key = time.strftime("%Y-%m-%d")
+    data = _load_time_saved()
+    entry = {"2": application_name}
+    bucket = data.get(date_key)
+    if not isinstance(bucket, list):
+        bucket = []
+        data[date_key] = bucket
+    bucket.append(entry)
+    _save_time_saved(data)
+
+
 def run() -> None:
     cfg = _load_config()
     driver = _start_driver()
@@ -117,6 +147,8 @@ def run() -> None:
                     if isinstance(details, list):
                         for item in details:
                             print(f"ThreatLocker detail: {item}")
+                    app_name = str(event.get("detail", {}).get("applicationName") or "N/A")
+                    _record_time_saved(app_name)
 
             time.sleep(cfg["POLL_INTERVAL_SEC"])
     except KeyboardInterrupt:

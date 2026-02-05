@@ -128,7 +128,7 @@
         const detail2 = texts[2] || "N/A";
         const scope =
           highlighted.find((l) =>
-            ["This Computer", "Computer Group", "Entire Organization"].includes(l)
+            ["This Computer", "This Computer Only", "This Computer only", "Computer Group", "Entire Organization"].includes(l)
           ) || "N/A";
         const elevation =
           highlighted.find((l) => ["Do not Elevate", "Elevate", "Silent Elevation"].includes(l)) ||
