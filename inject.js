@@ -56,11 +56,26 @@
         const sliderValue = slider
           ? (slider.querySelector("p.text-center.mb-2")?.innerText || "").trim()
           : "";
+        let applicationName = "N/A";
+        const newAppInput = document.querySelector("input[name='newAppName']");
+        if (newAppInput && typeof newAppInput.value === "string" && newAppInput.value.trim()) {
+          applicationName = newAppInput.value.trim();
+        } else {
+          const dropdown = document.querySelector("p-dropdown[dataKey='applicationID']");
+          const label = dropdown
+            ? dropdown.querySelector("span.p-element.p-dropdown-label.p-inputtext.ng-star-inserted")
+            : null;
+          const aria = label ? label.getAttribute("aria-label") : "";
+          if (aria && aria.trim()) {
+            applicationName = aria.trim();
+          }
+        }
         recordEvent("approve_clicked", {
           text: (labelText || btn.innerText || "").trim(),
           details: texts,
           highlighted,
           expiration: sliderValue,
+          applicationName,
         });
       },
       true
