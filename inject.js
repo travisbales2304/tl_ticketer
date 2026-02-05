@@ -81,6 +81,13 @@
         const sliderValue = slider
           ? (slider.querySelector("p.text-center.mb-2")?.innerText || "").trim()
           : "";
+        const radioBox = document.querySelector("div.p-radiobutton-box.p-highlight");
+        const radioParent = radioBox ? radioBox.closest("p-radiobutton") : null;
+        const radioName = radioParent ? (radioParent.getAttribute("name") || "") : "";
+        let approvalType = "N/A";
+        if (radioName === "TempBox1") approvalType = "Installation mode";
+        else if (radioName === "TempBox2") approvalType = "Learning Mode";
+        else if (radioName === "manualPolicySelectButton") approvalType = "hash";
         let applicationName = "N/A";
         let isNewApplication = false;
         const newAppInput = document.querySelector("input[name='newAppName']");
@@ -104,6 +111,7 @@
           expiration: sliderValue,
           applicationName,
           isNewApplication,
+          approvalType,
         });
         const deviceEl = document.querySelector(
           "p.p-element.cursor-pointer.text-primary.ng-star-inserted"
@@ -130,6 +138,7 @@
         const report = [
           `Approved application request for ${shortAppName} on ${computerName} for ${detail2}`,
           appLine,
+          approvalType,
           scope,
           sliderValue || "N/A",
           elevation,
