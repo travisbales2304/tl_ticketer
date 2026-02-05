@@ -95,10 +95,17 @@
           applicationName = newAppInput.value.trim();
           isNewApplication = true;
         } else {
-          const dropdown = document.querySelector("p-dropdown[dataKey='applicationID']");
-          const label = dropdown
-            ? dropdown.querySelector("span.p-element.p-dropdown-label.p-inputtext.ng-star-inserted")
-            : null;
+          const dropdown =
+            document.querySelector("p-dropdown[dataKey='applicationId']") ||
+            document.querySelector("p-dropdown[datakey='applicationId']") ||
+            document.querySelector("p-dropdown[data-key='applicationId']");
+          const label =
+            (dropdown
+              ? dropdown.querySelector(
+                  "div span.p-element.p-dropdown-label.p-inputtext.ng-star-inserted"
+                )
+              : null) ||
+            document.querySelector("span.p-element.p-dropdown-label.p-inputtext.ng-star-inserted");
           const aria = label ? label.getAttribute("aria-label") : "";
           if (aria && aria.trim()) {
             applicationName = aria.trim();
