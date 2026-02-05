@@ -142,14 +142,15 @@
               .map((part) => part.trim())
               .filter((part) => part.length > 0)[1] || applicationName
           : applicationName;
-        const report = [
+        const reportLines = [
           `Approved application request for ${shortAppName} on ${computerName} for ${detail2}`,
           appLine,
-          approvalType,
-          scope,
-          sliderValue || "N/A",
-          elevation,
-        ].join("\n");
+        ];
+        if (isNewApplication && approvalType && approvalType !== "N/A") {
+          reportLines.push(approvalType);
+        }
+        reportLines.push(scope, sliderValue || "N/A", elevation);
+        const report = reportLines.join("\n");
         copyToClipboard(report);
       },
       true
