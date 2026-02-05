@@ -35,9 +35,32 @@
         )
           .map((el) => (el.innerText || el.textContent || "").trim())
           .filter((txt) => txt.length > 0);
+        const allowedLabels = new Set([
+          "Computer Group",
+          "This Computer",
+          "Entire Organization",
+          "Permit Application",
+          "Permit with Ringfencing",
+          "Do not Elevate",
+          "Elevate",
+          "Silent Elevation",
+        ]);
+        const highlighted = Array.from(
+          document.querySelectorAll(
+            "div.p-ripple.p-element.p-button.p-component.ng-star-inserted.p-highlight"
+          )
+        )
+          .map((el) => (el.getAttribute("aria-label") || "").trim())
+          .filter((label) => allowedLabels.has(label));
+        const slider = document.querySelector("div.mt-2.px-5");
+        const sliderValue = slider
+          ? (slider.querySelector("p.text-center.mb-2")?.innerText || "").trim()
+          : "";
         recordEvent("approve_clicked", {
           text: (labelText || btn.innerText || "").trim(),
           details: texts,
+          highlighted,
+          expiration: sliderValue,
         });
       },
       true
